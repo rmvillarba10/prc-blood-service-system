@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PRC Blood Service System</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#CC0000;--red-dark:#990000;--red-light:#fee2e2;--red-mid:#fca5a5;
+  --navy:#1B2A6B;--navy-dark:#111D4A;--navy-light:#dbeafe;--navy-mid:#93c5fd;
+  --white:#fff;--off-white:#f4f6fb;--border:#e2e8f0;--text:#1e293b;--muted:#64748b;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--off-white);color:var(--text);min-height:100vh;font-size:13px}
+.app-shell{display:flex;flex-direction:column;min-height:100vh}
+
+/* TOPBAR */
+.topbar{background:linear-gradient(90deg,var(--navy-dark) 0%,var(--navy) 100%);color:#fff;padding:0 16px;display:flex;align-items:center;gap:12px;height:54px;border-bottom:3px solid var(--red);flex-shrink:0;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.topbar-logo{width:38px;height:38px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 0 2px var(--red)}
+.topbar-logo img{width:34px;height:34px;border-radius:50%;object-fit:contain}
+.topbar-title{flex:1}
+.topbar-title h1{font-size:13px;font-weight:700;letter-spacing:.3px}
+.topbar-title p{font-size:10px;color:rgba(255,255,255,.65);margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.topbar-user{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);padding:4px 10px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid rgba(255,255,255,.2)}
+.topbar-user i{font-size:14px}
+.sync-badge{font-size:10px;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.12);padding:3px 8px;border-radius:99px;cursor:pointer;border:1px solid rgba(255,255,255,.2)}
+.sync-badge i{font-size:13px}
+.sync-badge.syncing{animation:pulse .8s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.topbar-clock .time{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.topbar-clock .date{font-size:10px;color:rgba(255,255,255,.6);text-align:right}
+
+/* LAYOUT */
+.main-layout{display:flex;flex:1;overflow:hidden}
+.sidebar{width:195px;background:var(--navy-dark);padding:10px 0;flex-shrink:0;overflow-y:auto;box-shadow:2px 0 8px rgba(0,0,0,.15)}
+.nav-label{font-size:9px;font-weight:700;color:rgba(255,255,255,.35);padding:10px 14px 4px;letter-spacing:1.5px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 14px;cursor:pointer;color:rgba(255,255,255,.65);font-size:12px;border-left:3px solid transparent;transition:all .15s}
+.nav-item i{font-size:15px;flex-shrink:0}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff;border-left-color:var(--red)}
+.nav-item.active{background:rgba(204,0,0,.25);color:#fff;border-left-color:var(--red);font-weight:600}
+.nav-divider{border-top:1px solid rgba(255,255,255,.08);margin:6px 0}
+.content{flex:1;padding:12px;overflow-y:auto;background:var(--off-white)}
+.section{display:none}.section.active{display:block}
+
+/* PAGE HEADER */
+.page-header{margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.page-header-left h2{font-size:15px;font-weight:700;color:var(--navy-dark);display:flex;align-items:center;gap:7px}
+.page-header-left h2 i{color:var(--red)}
+.page-header-left p{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* STAT ROW */
+.stat-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:10px}
+.stat-card{background:#fff;border-radius:8px;padding:10px 12px;border:1px solid var(--border);display:flex;align-items:center;gap:10px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.stat-icon{width:36px;height:36px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.stat-icon i{font-size:18px}
+.stat-body .num{font-size:22px;font-weight:800;line-height:1}
+.stat-body .lbl{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* DASH GRID */
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dash-full{grid-column:1/-1}
+
+/* CARDS */
+.card{background:#fff;border-radius:8px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.card-header{padding:9px 14px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:7px;background:#fafbff}
+.card-header-title{font-size:12px;font-weight:600;color:var(--text);flex:1}
+.card-header-sub{font-size:10px;color:#94a3b8}
+.card-body{padding:12px}
+.card-body-flush{padding:0}
+
+/* TABLES */
+table{width:100%;border-collapse:collapse;font-size:11px}
+thead tr{background:#f8fafc}
+th{padding:5px 6px;text-align:center;font-weight:600;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap}
+th:first-child{text-align:left;min-width:80px}
+td{padding:4px 6px;text-align:center;border-bottom:1px solid #f1f5f9;color:#334155}
+td:first-child{text-align:left;font-weight:600;color:var(--text);background:#fafbff;border-right:1px solid var(--border);font-size:10px}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f8f9ff}
+tr:hover td:first-child{background:#eff3ff}
+
+.inv-input{width:44px;border:1px solid var(--border);border-radius:5px;padding:3px 4px;text-align:center;font-size:11px;background:#fff;color:var(--text);transition:.15s}
+.inv-input:focus{outline:none;border-color:var(--navy);background:#f8f9ff}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:600;gap:3px}
+.bg-green{background:#dcfce7;color:#166534}
+.bg-red{background:#fee2e2;color:#991b1b}
+.bg-amber{background:#fef9c3;color:#854d0e}
+.bg-blue{background:var(--navy-light);color:var(--navy-dark)}
+.bg-gray{background:#f1f5f9;color:#475569}
+.bg-purple{background:#ede9fe;color:#5b21b6}
+.bg-navy{background:var(--navy);color:#fff}
+.bg-teal{background:#ccfbf1;color:#0f766e}
+
+/* FORMS */
+.form-section-title{font-size:10px;font-weight:700;color:var(--navy);letter-spacing:.8px;text-transform:uppercase;margin:12px 0 8px;padding-bottom:5px;border-bottom:2px solid var(--navy-light)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.form-grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
+.full{grid-column:1/-1}
+.fg{display:flex;flex-direction:column;gap:3px}
+.fg label{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.3px}
+.fg input,.fg select{border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;background:#fff;color:var(--text);width:100%;transition:.15s}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 2px rgba(27,42,107,.1)}
+.fg input::placeholder{color:#cbd5e1}
+.required-star{color:var(--red)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:6px;border:1px solid transparent;cursor:pointer;font-size:12px;font-weight:500;transition:all .15s}
+.btn i{font-size:14px}
+.btn-primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-primary:hover{background:var(--navy-dark)}
+.btn-red{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-red:hover{background:var(--red-dark)}
+.btn-secondary{background:#fff;color:#475569;border-color:var(--border)}
+.btn-secondary:hover{background:#f8fafc}
+.btn-danger{background:#fee2e2;color:#991b1b;border-color:#fca5a5}
+.btn-danger:hover{background:#fecaca}
+.btn-success{background:#dcfce7;color:#166534;border-color:#86efac}
+.btn-success:hover{background:#bbf7d0}
+.btn-amber{background:#fef9c3;color:#854d0e;border-color:#fde047}
+.btn-amber:hover{background:#fef08a}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-row{display:flex;gap:7px;margin-top:12px;flex-wrap:wrap}
+
+/* ALERTS */
+.alert{padding:8px 12px;border-radius:7px;font-size:12px;margin-bottom:8px;border:1px solid;display:flex;align-items:center;gap:7px}
+.alert i{font-size:15px}
+.alert-success{background:#dcfce7;color:#166534;border-color:#86efac}
+.alert-error{background:#fee2e2;color:#991b1b;border-color:#fca5a5}
+.alert-info{background:var(--navy-light);color:var(--navy-dark);border-color:var(--navy-mid)}
+
+/* RESERVATION LIST */
+.res-item{border:1px solid var(--border);border-radius:7px;padding:10px 12px;margin-bottom:7px;display:flex;align-items:flex-start;gap:10px;background:#fff}
+.res-item-icon{width:30px;height:30px;border-radius:6px;background:#eff3ff;color:var(--navy);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.res-item-icon i{font-size:15px}
+.res-body{flex:1}
+.res-name{font-size:12px;font-weight:600;color:var(--text)}
+.res-meta{font-size:10px;color:var(--muted);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap}
+.res-actions{display:flex;gap:5px;flex-shrink:0;align-items:center;flex-direction:column}
+
+/* SN GRID */
+.sn-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+
+/* RECORDS */
+.records-table-wrap{overflow-x:auto}
+.empty-state{text-align:center;padding:24px 16px;color:#94a3b8}
+.empty-state i{font-size:30px;display:block;margin-bottom:7px}
+.empty-state p{font-size:12px}
+
+/* TABS */
+.section-tabs{display:flex;gap:2px;padding:10px 14px 0;background:#fafbff;border-bottom:1px solid #f1f5f9}
+.stab{padding:6px 12px;font-size:11px;font-weight:500;cursor:pointer;color:var(--muted);border-radius:6px 6px 0 0;border:1px solid transparent;border-bottom:none;margin-bottom:-1px}
+.stab.active{background:#fff;color:var(--navy);border-color:var(--border);border-bottom-color:#fff;font-weight:600}
+.export-toolbar{display:flex;gap:7px;padding:10px 14px;background:#f8fafc;border-bottom:1px solid #f1f5f9;flex-wrap:wrap;align-items:center}
+.export-toolbar-title{font-size:11px;font-weight:600;color:var(--muted);margin-right:3px}
+
+/* INV PILLS */
+.inv-pill{display:inline-block;min-width:32px;text-align:center;padding:2px 6px;border-radius:5px;font-size:11px;font-weight:600}
+.inv-zero{background:#fee2e2;color:#991b1b}
+.inv-low{background:#fef9c3;color:#854d0e}
+.inv-ok{background:#dcfce7;color:#166534}
+.update-stamp{font-size:10px;color:#94a3b8;padding:6px 14px;border-top:1px solid #f1f5f9;display:flex;align-items:center;gap:5px}
+
+/* MONTHLY REPORT */
+.report-section{margin-bottom:14px}
+.report-title{font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.6px;padding:8px 14px;background:var(--navy);border-bottom:1px solid var(--navy-mid)}
+.report-table{width:100%;border-collapse:collapse;font-size:11px}
+.report-table th{background:var(--navy);color:#fff;padding:5px 8px;text-align:center;font-weight:600;font-size:10px}
+.report-table th:first-child{text-align:left}
+.report-table td{padding:4px 8px;border-bottom:1px solid #f1f5f9;text-align:center}
+.report-table td:first-child{text-align:left;font-weight:500}
+.report-table tr:hover td{background:#f8f9ff}
+.report-table tfoot td{background:#eff3ff;font-weight:700;border-top:2px solid var(--navy-mid)}
+.month-filter{display:flex;gap:8px;align-items:center;padding:10px 14px;background:#f8fafc;border-bottom:1px solid #f1f5f9;flex-wrap:wrap}
+.month-filter label{font-size:11px;font-weight:600;color:var(--muted)}
+
+/* LOGIN OVERLAY */
+.login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,var(--navy-dark) 0%,var(--navy) 50%,#2d1b69 100%);display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-box{background:#fff;border-radius:16px;padding:32px;width:340px;box-shadow:0 20px 60px rgba(0,0,0,.4);text-align:center}
+.login-logo{width:72px;height:72px;border-radius:50%;margin:0 auto 16px;border:3px solid var(--red);overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fff}
+.login-logo img{width:66px;height:66px;border-radius:50%;object-fit:contain}
+.login-box h2{font-size:16px;font-weight:700;color:var(--navy-dark);margin-bottom:2px}
+.login-box p{font-size:11px;color:var(--muted);margin-bottom:20px}
+.login-box .fg{text-align:left;margin-bottom:10px}
+.login-box .fg label{font-size:11px;font-weight:600;color:var(--muted)}
+.login-box .fg input{border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;width:100%;transition:.15s}
+.login-box .fg input:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 2px rgba(27,42,107,.12)}
+.login-btn{width:100%;padding:10px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-top:6px;transition:.15s}
+.login-btn:hover{background:var(--navy-dark)}
+.login-err{color:var(--red);font-size:11px;margin-top:8px;display:none}
+
+/* DATA MANAGEMENT */
+.dm-section{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dm-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:16px}
+.dm-card h3{font-size:12px;font-weight:700;color:var(--navy-dark);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.dm-card h3 i{color:var(--red)}
+.dm-card p{font-size:11px;color:var(--muted);margin-bottom:12px}
+
+/* DAILY SUMMARY TABLE */
+.daily-sum-table{font-size:11px}
+.daily-sum-table th{background:var(--navy);color:#fff;padding:5px 8px;font-size:10px}
+.daily-sum-table td{padding:4px 8px;border-bottom:1px solid #f1f5f9}
+.daily-sum-table tr:hover td{background:#f8f9ff}
+
+/* ACCOUNT MANAGEMENT */
+.acct-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:7px;background:#fff;margin-bottom:6px}
+.acct-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.acct-info{flex:1}
+.acct-name{font-size:12px;font-weight:600}
+.acct-role{font-size:10px;color:var(--muted)}
+.acct-actions{display:flex;gap:5px}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:8000}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:12px;padding:24px;width:380px;max-width:95vw;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.modal h3{font-size:14px;font-weight:700;color:var(--navy-dark);margin-bottom:16px;display:flex;align-items:center;gap:7px}
+.modal h3 i{color:var(--red)}
+.modal-btns{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
+
+/* RELEASED BADGE */
+.res-released-badge{display:inline-flex;align-items:center;gap:3px;background:#dcfce7;color:#166534;border-radius:4px;font-size:9px;font-weight:700;padding:2px 5px}
+</style>
+</head>
+<body>
+<!-- LOGIN OVERLAY -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">
+      <img src="data:image/svg+xml,%3Csvg viewBox='0 0 64 64' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='32' cy='32' r='30' fill='%231B2A6B'/%3E%3Ccircle cx='32' cy='32' r='24' fill='white'/%3E%3Crect x='26' y='14' width='12' height='36' rx='4' fill='%23CC0000'/%3E%3Crect x='14' y='26' width='36' height='12' rx='4' fill='%23CC0000'/%3E%3C/svg%3E" alt="PRC">
+    </div>
+    <h2>PRC Blood Service System</h2>
+    <p>Philippine Red Cross — Batangas Chapter</p>
+    <div class="fg"><label>Username</label><input type="text" id="login-user" placeholder="Enter username" autocomplete="off"></div>
+    <div class="fg"><label>Password</label><input type="password" id="login-pass" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="login-err" id="login-err"><i class="ti ti-alert-circle"></i> Invalid username or password.</div>
+    <button class="login-btn" onclick="doLogin()"><i class="ti ti-login"></i> Sign In</button>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="modal-overlay" id="chpw-modal">
+  <div class="modal">
+    <h3><i class="ti ti-lock"></i>Change Password</h3>
+    <div class="fg" style="margin-bottom:10px"><label>Current Password</label><input type="password" id="chpw-old" placeholder="Current password"></div>
+    <div class="fg" style="margin-bottom:10px"><label>New Password</label><input type="password" id="chpw-new" placeholder="New password (min 4 chars)"></div>
+    <div class="fg"><label>Confirm New Password</label><input type="password" id="chpw-confirm" placeholder="Confirm new password"></div>
+    <div class="modal-btns">
+      <button class="btn btn-secondary" onclick="closeModal('chpw-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="doChangePassword()"><i class="ti ti-check"></i>Change Password</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD ACCOUNT MODAL -->
+<div class="modal-overlay" id="addacct-modal">
+  <div class="modal">
+    <h3><i class="ti ti-user-plus"></i>Add New Account</h3>
+    <div class="fg" style="margin-bottom:10px"><label>Full Name <span class="required-star">*</span></label><input type="text" id="na-name" placeholder="e.g. Juan Dela Cruz"></div>
+    <div class="fg" style="margin-bottom:10px"><label>Username <span class="required-star">*</span></label><input type="text" id="na-user" placeholder="Unique username" autocomplete="off"></div>
+    <div class="fg" style="margin-bottom:10px"><label>Role <span class="required-star">*</span></label>
+      <select id="na-role"><option value="medtech">Medical Technologist</option><option value="volunteer">Volunteer</option></select></div>
+    <div class="fg"><label>Password <span class="required-star">*</span></label><input type="password" id="na-pass" placeholder="Set initial password"></div>
+    <div class="modal-btns">
+      <button class="btn btn-secondary" onclick="closeModal('addacct-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="doAddAccount()"><i class="ti ti-check"></i>Add Account</button>
+    </div>
+  </div>
+</div>
+
+<div class="app-shell">
+<div class="topbar">
+  <div class="topbar-logo">
+    <img src="data:image/svg+xml,%3Csvg viewBox='0 0 64 64' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='32' cy='32' r='30' fill='%231B2A6B'/%3E%3Ccircle cx='32' cy='32' r='24' fill='white'/%3E%3Crect x='26' y='14' width='12' height='36' rx='4' fill='%23CC0000'/%3E%3Crect x='14' y='26' width='36' height='12' rx='4' fill='%23CC0000'/%3E%3C/svg%3E" alt="PRC">
+  </div>
+  <div class="topbar-title">
+    <h1>Blood Service Management System</h1>
+    <p>Philippine Red Cross — Batangas Chapter · Nasugbu Branch</p>
+  </div>
+  <div class="topbar-right">
+    <div class="sync-badge" id="sync-badge" onclick="manualSync()" title="Click to sync to cloud">
+      <i class="ti ti-cloud-upload"></i><span id="sync-label">Synced</span>
+    </div>
+    <div class="topbar-user" onclick="openModal('chpw-modal')" title="Change password">
+      <i class="ti ti-user-circle"></i><span id="topbar-username">—</span>
+      <span id="topbar-role-badge" class="badge bg-amber" style="font-size:9px"></span>
+    </div>
+    <div class="btn btn-danger btn-sm" onclick="doLogout()" style="padding:4px 8px"><i class="ti ti-logout" style="font-size:13px"></i></div>
+    <div class="topbar-clock">
+      <div class="time" id="clock">--:-- --</div>
+      <div class="date" id="datestamp">Loading...</div>
+    </div>
+  </div>
+</div>
+<div class="main-layout">
+<div class="sidebar">
+  <div class="nav-label">Main</div>
+  <div class="nav-item active" onclick="showSection('dashboard',this)"><i class="ti ti-layout-dashboard"></i>Dashboard</div>
+  <div class="nav-item" onclick="showSection('reservation',this)"><i class="ti ti-clipboard-list"></i>Reservation</div>
+  <div class="nav-item" onclick="showSection('released',this)"><i class="ti ti-droplet"></i>Blood Released</div>
+  <div class="nav-divider"></div>
+  <div class="nav-label">Reports</div>
+  <div class="nav-item" onclick="showSection('records',this)"><i class="ti ti-file-analytics"></i>Records</div>
+  <div class="nav-item" onclick="showSection('addons-mgmt',this)"><i class="ti ti-plus"></i>Add-ons Entry</div>
+  <div class="nav-item" onclick="showSection('monthly-report',this)"><i class="ti ti-chart-bar"></i>Monthly Report</div>
+  <div class="nav-divider"></div>
+  <div class="nav-label">System</div>
+  <div class="nav-item" id="nav-data-mgmt" onclick="showSection('data-mgmt',this)"><i class="ti ti-database-cog"></i>Data Management</div>
+  <div class="nav-item" id="nav-accounts" onclick="showSection('accounts',this)"><i class="ti ti-users"></i>Accounts</div>
+</div>
+<div class="content">
+<div id="alert-box"></div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="section active">
+  <div class="page-header">
+    <div class="page-header-left"><h2><i class="ti ti-layout-dashboard"></i>Blood Inventory Dashboard</h2><p>Real-time overview · Auto-synced to cloud</p></div>
+  </div>
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#fee2e2"><i class="ti ti-droplet" style="color:var(--red)"></i></div>
+      <div class="stat-body"><div class="num" id="stat-total" style="color:var(--red)">0</div><div class="lbl">Total Inventory</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#dcfce7"><i class="ti ti-circle-check" style="color:#166534"></i></div>
+      <div class="stat-body"><div class="num" id="stat-avail" style="color:#166534">0</div><div class="lbl">Available Units</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#fef9c3"><i class="ti ti-clock" style="color:#854d0e"></i></div>
+      <div class="stat-body"><div class="num" id="stat-reserved" style="color:#854d0e">0</div><div class="lbl">Reserved</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:var(--navy-light)"><i class="ti ti-test-pipe" style="color:var(--navy)"></i></div>
+      <div class="stat-body"><div class="num" id="stat-addons" style="color:var(--navy)">0</div><div class="lbl">Add-ons Today</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#f0fdf4"><i class="ti ti-circle-arrow-down" style="color:#16a34a"></i></div>
+      <div class="stat-body"><div class="num" id="stat-today-released" style="color:#16a34a">0</div><div class="lbl">Released Today</div></div>
+    </div>
+  </div>
+  <div class="dash-grid">
+    <div class="card dash-full">
+      <div class="card-header">
+        <i class="ti ti-database" style="color:var(--navy);font-size:15px"></i>
+        <span class="card-header-title">1. Total Blood Inventory</span>
+        <span class="badge bg-amber" style="font-size:9px">12:00 AM Manual Update</span>
+        <button class="btn btn-primary btn-sm" style="margin-left:8px" onclick="saveInventory()"><i class="ti ti-device-floppy"></i>Save</button>
+      </div>
+      <div class="card-body-flush"><div style="overflow-x:auto"><table id="inv-table"></table></div></div>
+      <div class="update-stamp"><i class="ti ti-clock"></i>Last updated: <span id="inv-last-update" style="color:#475569;font-weight:600">—</span></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <i class="ti ti-circle-check" style="color:#166534;font-size:15px"></i>
+        <span class="card-header-title">2. Available Units</span>
+        <span class="card-header-sub">Inventory − Reserved + Add-ons</span>
+      </div>
+      <div class="card-body-flush"><div style="overflow-x:auto"><table id="avail-table"></table></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <i class="ti ti-clock" style="color:#854d0e;font-size:15px"></i>
+        <span class="card-header-title">3. Reserved Units</span>
+      </div>
+      <div class="card-body-flush"><div style="overflow-x:auto"><table id="reserved-table"></table></div></div>
+    </div>
+    <div class="card dash-full">
+      <div class="card-header">
+        <i class="ti ti-test-pipe" style="color:var(--navy);font-size:15px"></i>
+        <span class="card-header-title">4. Add-ons (New Serology Results)</span>
+      </div>
+      <div class="card-body-flush"><div style="overflow-x:auto"><table id="addons-table"></table></div></div>
+    </div>
+    <!-- DAILY TRANSACTIONS SUMMARY -->
+    <div class="card dash-full">
+      <div class="card-header">
+        <i class="ti ti-calendar-stats" style="color:var(--red);font-size:15px"></i>
+        <span class="card-header-title">5. Daily Transactions Summary — <span id="daily-month-label"></span></span>
+        <span class="card-header-sub">Dispense monitor for the whole month</span>
+      </div>
+      <div class="card-body-flush" style="overflow-x:auto"><table class="daily-sum-table" id="daily-summary-table"></table></div>
+    </div>
+  </div>
+</div>
+
+<!-- RESERVATION -->
+<div id="reservation" class="section">
+  <div class="page-header"><div class="page-header-left"><h2><i class="ti ti-clipboard-list"></i>Blood Reservation</h2><p>Create and manage patient blood reservations</p></div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
+    <div class="card">
+      <div class="card-header"><i class="ti ti-clipboard-plus" style="color:var(--red);font-size:15px"></i><span class="card-header-title">New Reservation</span></div>
+      <div class="card-body">
+        <div class="form-section-title">Patient Information</div>
+        <div class="form-grid">
+          <div class="fg"><label>Date <span class="required-star">*</span></label><input type="date" id="res-date"></div>
+          <div class="fg"><label>Time Reserved <span class="required-star">*</span></label><input type="time" id="res-time"></div>
+          <div class="fg full"><label>Patient Name — Last, First, Middle <span class="required-star">*</span></label><input type="text" id="res-patient" placeholder="e.g. Dela Cruz, Juan, Santos"></div>
+          <div class="fg full"><label>Hospital <span class="required-star">*</span></label><input list="hospital-list" id="res-hospital" placeholder="Select or type hospital..."><datalist id="hospital-list"></datalist></div>
+        </div>
+        <div class="form-section-title">Blood Details</div>
+        <div class="form-grid-3">
+          <div class="fg"><label>Blood Type <span class="required-star">*</span></label>
+            <select id="res-btype"><option value="">— Select —</option><option>A+</option><option>B+</option><option>O+</option><option>AB+</option><option>A-</option><option>B-</option><option>O-</option><option>AB-</option></select></div>
+          <div class="fg"><label>Component <span class="required-star">*</span></label>
+            <select id="res-comp"><option value="">— Select —</option><option>Whole Blood</option><option>Packed RBC</option><option>Platelet Concentrate</option><option>Fresh Frozen Plasma</option></select></div>
+          <div class="fg"><label>Quantity <span class="required-star">*</span></label><input type="number" id="res-qty" min="1" value="1"></div>
+        </div>
+        <div class="fg" style="margin-top:8px"><label>Remarks</label><input type="text" id="res-remarks" placeholder="Optional"></div>
+        <div class="btn-row">
+          <button class="btn btn-red" onclick="saveReservation()"><i class="ti ti-check"></i>Save Reservation</button>
+          <button class="btn btn-secondary" onclick="clearResForm()"><i class="ti ti-x"></i>Clear</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><i class="ti ti-list" style="color:var(--red);font-size:15px"></i><span class="card-header-title">Active Reservations</span><span class="badge bg-red" id="active-count">0</span></div>
+      <div class="card-body" id="res-list" style="max-height:520px;overflow-y:auto"></div>
+    </div>
+  </div>
+</div>
+
+<!-- BLOOD RELEASED -->
+<div id="released" class="section">
+  <div class="page-header"><div class="page-header-left"><h2><i class="ti ti-droplet"></i>Blood Released Entry</h2><p>Record blood units released to patients</p></div></div>
+  <div class="card">
+    <div class="card-header"><i class="ti ti-droplet" style="color:var(--red);font-size:15px"></i><span class="card-header-title">New Release Record</span></div>
+    <div class="card-body">
+      <div class="form-section-title">Transaction Details</div>
+      <div class="form-grid-4">
+        <div class="fg"><label>Date <span class="required-star">*</span></label><input type="date" id="rel-date"></div>
+        <div class="fg"><label>BRF # <span class="required-star">*</span></label><input type="text" id="rel-brf" placeholder="BRF #"></div>
+        <div class="fg"><label>Time Prepared</label><input type="time" id="rel-time-prepared"></div>
+        <div class="fg"><label>Time Released</label><input type="time" id="rel-time-released"></div>
+      </div>
+      <div class="form-section-title">Patient Information</div>
+      <div class="form-grid">
+        <div class="fg full"><label>Patient Name — Last, First, Middle <span class="required-star">*</span></label><input type="text" id="rel-patient" placeholder="e.g. Dela Cruz, Juan, Santos"></div>
+        <div class="fg"><label>Sex</label><select id="rel-sex"><option value="">— Select —</option><option>Male</option><option>Female</option></select></div>
+        <div class="fg"><label>Age</label><input type="number" id="rel-age" min="0" placeholder="Age"></div>
+        <div class="fg full"><label>Diagnosis</label><input type="text" id="rel-diagnosis" placeholder="Clinical diagnosis"></div>
+        <div class="fg full"><label>Hospital <span class="required-star">*</span></label><input list="hospital-list2" id="rel-hospital" placeholder="Select or type hospital..."><datalist id="hospital-list2"></datalist></div>
+        <div class="fg"><label>Blood Source</label>
+          <select id="rel-source"><option value="">— Select —</option><option>Nasugbu Branch</option><option>Batangas City Branch</option><option>Lipa City Branch</option><option>Tanauan City Branch</option></select></div>
+        <div class="fg"><label>Address</label><input type="text" id="rel-address" placeholder="Patient address"></div>
+      </div>
+      <div class="form-section-title">Blood Details</div>
+      <div class="form-grid-4">
+        <div class="fg"><label>Blood Type <span class="required-star">*</span></label>
+          <select id="rel-btype"><option value="">— Select —</option><option>A+</option><option>B+</option><option>O+</option><option>AB+</option><option>A-</option><option>B-</option><option>O-</option><option>AB-</option></select></div>
+        <div class="fg"><label>Component <span class="required-star">*</span></label>
+          <select id="rel-comp"><option value="">— Select —</option><option>Whole Blood</option><option>Packed RBC</option><option>Platelet Concentrate</option><option>Fresh Frozen Plasma</option></select></div>
+        <div class="fg"><label>Quantity <span class="required-star">*</span></label><input type="number" id="rel-qty" min="1" value="1"></div>
+        <div class="fg"><label>Category <span class="required-star">*</span></label>
+          <select id="rel-cat"><option value="">— Select —</option><option>Pay</option><option>Charity</option><option>Indigent</option><option>C/O AICS</option><option>HD Paid</option><option>HD Unpaid</option><option>Augmented</option></select></div>
+      </div>
+      <div class="form-grid">
+        <div class="fg"><label>Charity / Indigent Care of</label><input type="text" id="rel-charity" placeholder="If applicable"></div>
+        <div class="fg"><label>Amount Paid (₱)</label><input type="number" id="rel-amount" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="fg"><label>Sales Invoice #</label><input type="text" id="rel-inv" placeholder="Invoice number"></div>
+        <div class="fg"><label>Official Receipt #</label><input type="text" id="rel-or" placeholder="OR number"></div>
+      </div>
+      <div class="form-section-title">Serial Numbers (up to 10)</div>
+      <div class="sn-grid">
+        <div class="fg"><label>SN 1</label><input type="text" id="sn1" placeholder="—"></div>
+        <div class="fg"><label>SN 2</label><input type="text" id="sn2" placeholder="—"></div>
+        <div class="fg"><label>SN 3</label><input type="text" id="sn3" placeholder="—"></div>
+        <div class="fg"><label>SN 4</label><input type="text" id="sn4" placeholder="—"></div>
+        <div class="fg"><label>SN 5</label><input type="text" id="sn5" placeholder="—"></div>
+        <div class="fg"><label>SN 6</label><input type="text" id="sn6" placeholder="—"></div>
+        <div class="fg"><label>SN 7</label><input type="text" id="sn7" placeholder="—"></div>
+        <div class="fg"><label>SN 8</label><input type="text" id="sn8" placeholder="—"></div>
+        <div class="fg"><label>SN 9</label><input type="text" id="sn9" placeholder="—"></div>
+        <div class="fg"><label>SN 10</label><input type="text" id="sn10" placeholder="—"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-red" onclick="saveReleased()"><i class="ti ti-device-floppy"></i>Save Record</button>
+        <button class="btn btn-secondary" onclick="clearRelForm()"><i class="ti ti-x"></i>Clear</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RECORDS -->
+<div id="records" class="section">
+  <div class="page-header"><div class="page-header-left"><h2><i class="ti ti-file-analytics"></i>Records &amp; Export</h2><p>View all transactions and export to Excel</p></div></div>
+  <div class="card">
+    <div class="export-toolbar">
+      <span class="export-toolbar-title"><i class="ti ti-download"></i> Export:</span>
+      <button class="btn btn-success btn-sm" onclick="exportDaily()"><i class="ti ti-calendar-event"></i>Daily Transactions</button>
+      <button class="btn btn-success btn-sm" onclick="exportMonthlyExcel()"><i class="ti ti-calendar-stats"></i>Consolidated Monthly</button>
+      <div style="margin-left:auto;display:flex;gap:6px">
+        <button class="btn btn-danger btn-sm" onclick="if(confirm('Clear ALL data permanently?')){clearAll()}"><i class="ti ti-trash"></i>Clear All Data</button>
+      </div>
+    </div>
+    <div class="section-tabs">
+      <div class="stab active" onclick="switchTab('tab-released',this)">Blood Released</div>
+      <div class="stab" onclick="switchTab('tab-reservations',this)">Reservation History</div>
+    </div>
+    <div id="tab-released" class="card-body-flush records-table-wrap">
+      <table><thead><tr><th>Date</th><th>Patient Name</th><th>BRF #</th><th>Hospital</th><th>Blood Type</th><th>Component</th><th>Qty</th><th>Category</th><th>Amount</th><th>Performed By</th></tr></thead>
+      <tbody id="records-tbody"></tbody></table>
+    </div>
+    <div id="tab-reservations" class="card-body-flush records-table-wrap" style="display:none">
+      <table><thead><tr><th>Date</th><th>Patient Name</th><th>Hospital</th><th>Blood Type</th><th>Component</th><th>Qty</th><th>Remarks</th><th>Status</th><th>Performed By</th></tr></thead>
+      <tbody id="res-hist-tbody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ADD-ONS -->
+<div id="addons-mgmt" class="section">
+  <div class="page-header"><div class="page-header-left"><h2><i class="ti ti-test-pipe"></i>Add-ons Entry</h2><p>Enter new serology results to add to available inventory</p></div></div>
+  <div class="card">
+    <div class="card-header"><i class="ti ti-test-pipe" style="color:var(--navy);font-size:15px"></i><span class="card-header-title">Add Serology Units</span></div>
+    <div class="card-body">
+      <div class="form-grid-3">
+        <div class="fg"><label>Blood Type <span class="required-star">*</span></label>
+          <select id="ao-btype"><option value="">— Select —</option><option>A+</option><option>B+</option><option>O+</option><option>AB+</option><option>A-</option><option>B-</option><option>O-</option><option>AB-</option></select></div>
+        <div class="fg"><label>Component <span class="required-star">*</span></label>
+          <select id="ao-comp"><option value="">— Select —</option><option>Whole Blood</option><option>Packed RBC</option><option>Platelet Concentrate</option><option>Fresh Frozen Plasma</option></select></div>
+        <div class="fg"><label>Units to Add <span class="required-star">*</span></label><input type="number" id="ao-qty" min="1" value="1"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveAddon()"><i class="ti ti-plus"></i>Add Units</button>
+        <button class="btn btn-danger btn-sm" onclick="resetAddons()" style="margin-left:auto"><i class="ti ti-refresh"></i>Reset Today's Add-ons</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><i class="ti ti-list" style="color:var(--navy);font-size:15px"></i><span class="card-header-title">Current Add-ons Matrix</span></div>
+    <div class="card-body-flush"><div style="overflow-x:auto"><table id="addons-mgmt-table"></table></div></div>
+  </div>
+</div>
+
+<!-- MONTHLY REPORT -->
+<div id="monthly-report" class="section">
+  <div class="page-header"><div class="page-header-left"><h2><i class="ti ti-chart-bar"></i>Monthly Statistical Report</h2><p>Comprehensive blood service statistics by month</p></div></div>
+  <div class="card">
+    <div class="month-filter">
+      <label>Report Month:</label>
+      <input type="month" id="report-month" style="border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px">
+      <button class="btn btn-primary btn-sm" onclick="renderMonthlyReport()"><i class="ti ti-refresh"></i>Generate</button>
+      <button class="btn btn-success btn-sm" onclick="exportMonthlyReport()"><i class="ti ti-file-spreadsheet"></i>Export to Excel</button>
+    </div>
+    <div id="monthly-report-content" class="card-body">
+      <div class="empty-state"><i class="ti ti-chart-bar"></i><p>Select a month and click Generate.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- DATA MANAGEMENT -->
+<div id="data-mgmt" class="section">
+  <div class="page-header"><div class="page-header-left"><h2><i class="ti ti-database-cog"></i>Data Management</h2><p>Backup, restore, and manage system data</p></div></div>
+  <div class="dm-section">
+    <div class="dm-card">
+      <h3><i class="ti ti-download"></i>Export Backup (JSON)</h3>
+      <p>Download all system data as a JSON file for backup or transfer.</p>
+      <button class="btn btn-primary" onclick="exportJSON()"><i class="ti ti-file-download"></i>Export JSON Backup</button>
+    </div>
+    <div class="dm-card">
+      <h3><i class="ti ti-upload"></i>Import Backup (JSON)</h3>
+      <p>Restore data from a previously exported JSON backup file.</p>
+      <input type="file" id="import-json-file" accept=".json" style="display:none" onchange="importJSON(this)">
+      <button class="btn btn-amber" onclick="document.getElementById('import-json-file').click()"><i class="ti ti-file-upload"></i>Import JSON Backup</button>
+    </div>
+    <div class="dm-card">
+      <h3><i class="ti ti-cloud-upload"></i>Manual Cloud Sync</h3>
+      <p>Force sync all local data to cloud storage immediately.</p>
+      <button class="btn btn-primary" onclick="manualSync()"><i class="ti ti-refresh"></i>Sync to Cloud Now</button>
+    </div>
+    <div class="dm-card">
+      <h3><i class="ti ti-trash"></i>Clear All Data</h3>
+      <p>Permanently delete all records, reservations, and inventory data. This cannot be undone.</p>
+      <button class="btn btn-danger" onclick="if(confirm('Permanently delete ALL data? This cannot be undone.')){clearAll()}"><i class="ti ti-alert-triangle"></i>Clear All Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- ACCOUNTS -->
+<div id="accounts" class="section">
+  <div class="page-header">
+    <div class="page-header-left"><h2><i class="ti ti-users"></i>Account Management</h2><p>Manage user accounts and access</p></div>
+    <button class="btn btn-red" id="btn-add-acct" onclick="openModal('addacct-modal')"><i class="ti ti-user-plus"></i>Add Account</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><i class="ti ti-users" style="color:var(--navy);font-size:15px"></i><span class="card-header-title">System Users</span></div>
+    <div class="card-body" id="accounts-list"></div>
+  </div>
+</div>
+
+</div></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const COMPS=['Whole Blood','Packed RBC','Platelet Concentrate','Fresh Frozen Plasma'];
+const BTYPES=['A+','B+','O+','AB+','A-','B-','O-','AB-'];
+const CS={'Whole Blood':'WB','Packed RBC':'PRBC','Platelet Concentrate':'PC','Fresh Frozen Plasma':'FFP'};
+const AGE_BRACKETS=['<5 yrs','5–14 yrs','15–44 yrs','45–59 yrs','60+ yrs'];
+const CAT_MAIN=['Pay','Charity','Indigent'];
+const HOSPITALS=["Adventist Medical Center","Alabat Island District Hospital","ALFONSO SPECIALIST HOSPITAL","Amang Rodriguez Memorial Medical Center","Angono Medics Hospital","Apacible Memorial District Hospital","Armed Forces of the Philippines","Asian Hospital and Medical Center","Balayan Bayview Hospital and Medical Center","BALIBAGO POLYCLINIC & HOSPITAL","BATAAN GEN HOSPITAL & MEDICAL CENTER","Batangas Health Care Hospital (Jesus of Nazareth)","Batangas Healthcare Speacialist Medical Center","Batangas Medical Center","Batangas Provincial Hospital","Bauan Doctors' General Hospital","Bauan General Hospital","Bay District Hospital","Biñan Doctor's Hospital, Inc.","C. P. Reyes Hospital","Calamba Doctors Hospital","Calamba Medical Center","Candelaria Kidney Care INC.","CARDINAL SANTOS MEDICAL CENTER","Carmona Hospital and Medical Center","Chinese General Hospital and Medical Center","Christ The Saviour Gen. Hospital","Christian Faith Medical Clinic","City Medical Emergency Hospital","CITY MEDIX STA ROSA","City of General Trias Doctors Medical Center","CITY OF IMUS DOCTORS HOSPITAL","City of Muntinlupa","CL MEDICAL CLINIC & PHARMACY","Clinic for the Sick Children","Commonwealth Hospital and Medical Center","Community General Hospital","Curis Naic Dialysis Center","Daniel O. Mercado Medical Center","De La Salle University Medical Center","De La Salle-Dr. Rodolfo Poblete Memorial Hospital","De Los Santos medical center","Divine Care Hospital","Divine Grace Medical Center","Divine Love General Hospital","Divine Mercy Hospital","Divine Word Hospital","Don Manuel Lopez Memorial District Hospital","Dr. Damian Reyes Provincial Hospital","Dr. Jose N. Rodriguez Memorial Hospital","Dr. Jose P. Rizal Memorial District Hospital","Dr. R. Rosales Memorial Medical Hospital","Dr. Rodolfo Poblete Memorial Hospital","Dr. Romeo Isana Rosales General Hospital","DR. YANGA HOSPITAL","DRA. JOSE N. RODRIGUEZ MEMORIAL HOSPITAL","Dra. Salvador Clinic","East Avenue Medical Center","EMILIO AGUINALDO COLLEGE MEDICAL CENTER-CAVITE","Essential Care Dialysis Center, INC.","EVANGELISTA HOSPITAL","EVANGELISTA MEDICAL SPECIALTY HOSPITAL","FATIMA UNIVERSITY MEDICAL CENTER CORP","Fe Del Mundo Medical Center","FIDELIS DIALYSIS CARE","FIRST CABUYAO HOSPITAL AND MEDICAL CENTER","First Filipino Saint Hospital","FRESENIUS KIDNEY CARE DIALYSIS CENTER","Gamez Hospital","Gen. Emilio Aguinaldo Memorial Hospital","Gen. Trias Maternity and Pediatric Hospital","GENERAL MIGUEL MALVAR MEDICAL RESEARCH FOUNDATION","Global Care Medical Center of Canlubang","Global Medical Center of Laguna","GLOBAL RELIANCE RENAL CARE","Golden Gate General Hospital","Gonzales Medical and Children's Hospital","Gumaca District Hospital","H. M. Corachea General Hospital","HEALTHSERV MEDICAL CENTER","Hemotek Renal Center","Holistic Dialysis Center","Holy Family Hospital","Holy Rosary of Cabuyao Hospital, Inc.","IMMACULATE CONCEPTION HOSPITAL","Jabez Medical Center","Jose District Hospital","Jose Reyes Memorial Medical Center","LAGUNA BAY DISTRICT HOSPITAL","Laguna Holy Family Hospital","Laguna Medical Center","Laguna Provincial Hospital- Bay District Hospital","Las Piñas DOCTORS HOSPITAL INC","Las Piñas General Hospital & Satellite Trauma Center","Laurel Memorial District Hospital","Laurel Municipal Hospital","Lemery Doctors' Medical Center","LGU- BAY DISTRICT HOSPITAL","Lipa City District Hospital","Lipa Doctors' Hospital","Lipa Medix Medical Center","Little Angels Medical Hospital","Lobo Municipal Hospital","Los Baños Doctor Hospital and Medical Center","LPH-BAY District Hospital","Lucena Mmg General Hospital","Lucena United Doctors Hospital and Medical Center","Luna Goco Medical Colleges","LUNG CENTER OF THE PHILIPPINES","Magsaysay Memorial District Hospital","Mahal na Virgen Maria Sto. Rosario District Hospital","Makati Medical Center","Mandaluyong City Medical Center","Manila Doctors Hospital","Manila Med Medical Center","MARIAN HOSPITAL OF STA. ROSA INC.","Martin Marasigan Memorial Hospital","Mary Mediatrix Medical Center","Medical Center of Taguig","Medical Center Parañaque Inc.","Medical Center Western Batangas","Medway Dialysis Center","MENDEZ SPECIALIST MEDICAL","Metro Antipolo Hospital","Metro Balayan Medical Center","Metro Cavite Dialysis Center","Metro Lemery Medical Center","Metro Lipa Medical Center","METRO POLITAN MEDICAL CENTER","Metro San Jose Medical Center","Mount Carmel Diocesan General Hospital","Muntinlupa Medical Center","MV Santiago Medical Center","N.L. Villa Memorial Medical Center","NAIC Doctors Hospital","Nephro Care Laguna","Nephro Med Asia Dialysis Center","Nephro Synergies INC.","Nephrology Center of Batangas City","Nephrology Center of Calamba","Nephrology Center of Cavite","Nephrology Center Of Manila","New Sinai MDI Hospital","Nodado General Hospital","Ospital ng BiñAn","Ospital ng Cabuyao","Ospital ng Calaca","Ospital ng Imus","Ospital ng Lipa","Ospital ng Maynila Medical Center","Ospital ng Muntinlupa","Ospital ng Nasugbu","OSPITAL NG PARANAQUE","Our Lady of Caysasay Medical Center","Our Lady of Lourdes Hospital","OUR LADY OF PEACE HOSPITAL","Our Lady of the Pillar Medical Center","Our Savior Hospital","Pacific Global Medical Center","Pagasanjan Medical Clinic","Palma Malaluan Hospital","PAMANA Medical Center","Paramount Medical Center Lipa","Pasay City General Hospital","Pasig City General Hospital","Pasig Doctors Medical Center","Perpetual Help Medical Center-Binan","Peter Paul Medical Center OF Candelaria Inc.","Philippine General Hospital","Philippine Heart Center","Philippine National Voluntary Blood Service Program Quezon Medical Center","Philippine Orthopedic Center","Pinamalayan Doctors Hospital","PIONEER LAB","PNP General Hospital","Pope John Paul II Hospital and Medical Center","PRC Batangas","PRC MANILA","PRC ROMBLON","Protacio Hospital","QUALIMED Sta. Rosa","Queen Mary Hospital","Quezon Medical Center","Quirino Memorial Medical Center","Rakkk Prophet Medical Center","RENALCARE","RNM Dialysis Center, Inc.","Rogaciano M. Mercado Memorial Hospital","Romblon Provincial Hospital","Royal Dialysis Center","San Antonio Life Care Hospital","San Antonio Medical Center of Lipa Inc.","San Diego de Alcala General Hospital","San Jose District Hospital","San Juan De Dios Educational Hospital","San Juan District Hospital","San Juan Doctors' Hospital","San Juan Nepomuceno Dialysis Center","San Pablo City General Hospital","San Pablo Colleges Medical Center","San Pablo Doctors Hospital","San Pedro Calungsod Medical Center Inc.","Santa Rosa Community Hospital","Santo Tomas General Hospital","Seamen's Hospital","Silang Specialist Medical Center","South Imus Specialist Hospital","Southern Luzon Hospital Medical Center","Southern Tagalog Regional Hospital","SPC Medical Center Clinical Laboratory","St. Andrew Hospital","St. Anne General Hospital, Inc.","St. Dominique Kidney Diagnostic Center","St. Frances Cabrini Medical Center","St. Gerard General Hospital","St. James Hospital, Inc.","St. John The Baptist Medical Center","St. Jude Family Hospital","St. Lukes Medical Center","St. Pascal De Baylon Hospital","St. Patrick's Hospital Medical Center","St. Rafael Dialysis Center","St. Vincent De Paul Hospital","Sta. Ana Hospital","Sta. Rosa Community Hospital","Sta. Rosa Hospital and Medical Center","Sto. Rosario Hospital","Sts. Francis & Paul General Hospital","Taal Polymedic Hospital and Medical Center","Tagaytay Hospital and Medical Center","Tagaytay Medical Center","TANZA FAMILY GENERAL HOSPITAL","Tanza Specialists Medical Center","TARLAC PROVINCIAL HOSPITAL","Tayabas Community Hospital, Inc.","The Medical City South Luzon","The Premier Medical Center","Therapy Management Service Philippines","Total Care Dialysis Center","UERM Memorial Medical Center","Unihealth Southwoods Hospital and Medical Center","United Candelaria Doctors Hospital","United Doctors of St. Camillus de Lellis Hospital","Universe Kidney Care Center","University Health Service","University Of Perpetual Help Medical Center","University of Sto. Tomas Hospital","Untalan General Hospital","Valenzuela Citicare Medical Center","VELASCO HOSPITAL","Veterans Memorial Medical Center","Victoriano Luna General Hospital","WELLSERVE Health Corp.","Westlake Medical Center","HSI HEMOCARESYSTEMINC."];
+
+// ── STATE ─────────────────────────────────────────────────
+let state={inventory:{},reservations:[],releasedRecords:[],addons:{},invLastUpdate:null};
+let accounts=[]; // stored separately
+let currentUser=null;
+let syncTimer=null,pendingSync=false;
+
+// ── DEFAULT ACCOUNTS ──────────────────────────────────────
+const DEFAULT_ACCOUNTS=[
+  {id:'admin',username:'admin',name:'Administrator',role:'admin',password:'admin123'},
+  {id:'medtech1',username:'medtech',name:'Medical Technologist',role:'medtech',password:'medtech123'}
+];
+
+// ── STORAGE ──────────────────────────────────────────────
+async function loadState(){
+  try{const r=await window.storage.get('prc-nsb-v4');if(r&&r.value)state=JSON.parse(r.value);}catch(e){}
+  try{const r=await window.storage.get('prc-nsb-accounts');if(r&&r.value)accounts=JSON.parse(r.value);else accounts=[...DEFAULT_ACCOUNTS];}catch(e){accounts=[...DEFAULT_ACCOUNTS];}
+}
+async function pushSync(){
+  try{
+    setSyncUI('syncing','Syncing…');
+    await window.storage.set('prc-nsb-v4',JSON.stringify(state));
+    await window.storage.set('prc-nsb-accounts',JSON.stringify(accounts));
+    setSyncUI('ok','Synced');pendingSync=false;
+  }catch(e){setSyncUI('err','Sync failed');console.error(e);}
+}
+function scheduleSync(){pendingSync=true;clearTimeout(syncTimer);syncTimer=setTimeout(pushSync,1500);}
+async function manualSync(){showAlert('Syncing to cloud…','info');await pushSync();showAlert('Cloud sync complete.');}
+function setSyncUI(s,lbl){
+  const b=document.getElementById('sync-badge'),l=document.getElementById('sync-label');
+  l.textContent=lbl;b.className='sync-badge'+(s==='syncing'?' syncing':'');
+  b.querySelector('i').className='ti '+(s==='syncing'?'ti-loader-2':s==='err'?'ti-cloud-off':'ti-cloud-check');
+}
+async function saveState(){scheduleSync();}
+
+// ── AUTH ──────────────────────────────────────────────────
+function doLogin(){
+  const u=document.getElementById('login-user').value.trim();
+  const p=document.getElementById('login-pass').value;
+  const acct=accounts.find(a=>a.username===u&&a.password===p);
+  if(!acct){document.getElementById('login-err').style.display='flex';return;}
+  currentUser=acct;
+  document.getElementById('login-overlay').style.display='none';
+  document.getElementById('login-err').style.display='none';
+  document.getElementById('topbar-username').textContent=acct.name;
+  const roleLbl={admin:'Admin',medtech:'MedTech',volunteer:'Volunteer'};
+  document.getElementById('topbar-role-badge').textContent=roleLbl[acct.role]||acct.role;
+  // Restrict accounts/data-mgmt nav based on role
+  const isAdmin=acct.role==='admin';
+  document.getElementById('nav-accounts').style.display=isAdmin?'flex':'none';
+  document.getElementById('nav-data-mgmt').style.display=isAdmin||acct.role==='medtech'?'flex':'none';
+}
+function doLogout(){
+  currentUser=null;
+  document.getElementById('login-overlay').style.display='flex';
+  document.getElementById('login-user').value='';
+  document.getElementById('login-pass').value='';
+}
+function doChangePassword(){
+  if(!currentUser){closeModal('chpw-modal');return;}
+  const oldP=document.getElementById('chpw-old').value;
+  const newP=document.getElementById('chpw-new').value;
+  const confP=document.getElementById('chpw-confirm').value;
+  if(oldP!==currentUser.password){showAlert('Current password is incorrect.','error');return;}
+  if(newP.length<4){showAlert('New password must be at least 4 characters.','error');return;}
+  if(newP!==confP){showAlert('New passwords do not match.','error');return;}
+  const acct=accounts.find(a=>a.id===currentUser.id);
+  if(acct){acct.password=newP;currentUser.password=newP;}
+  scheduleSync();closeModal('chpw-modal');showAlert('Password changed successfully.');
+  document.getElementById('chpw-old').value='';document.getElementById('chpw-new').value='';document.getElementById('chpw-confirm').value='';
+}
+
+// ── ACCOUNTS ──────────────────────────────────────────────
+function doAddAccount(){
+  const name=document.getElementById('na-name').value.trim();
+  const user=document.getElementById('na-user').value.trim();
+  const role=document.getElementById('na-role').value;
+  const pass=document.getElementById('na-pass').value;
+  if(!name||!user||!pass){showAlert('All fields are required.','error');return;}
+  if(accounts.find(a=>a.username===user)){showAlert('Username already exists.','error');return;}
+  if(pass.length<4){showAlert('Password must be at least 4 characters.','error');return;}
+  accounts.push({id:'u'+Date.now(),username:user,name,role,password:pass});
+  scheduleSync();closeModal('addacct-modal');renderAccounts();showAlert(`Account for ${name} created.`);
+  document.getElementById('na-name').value='';document.getElementById('na-user').value='';document.getElementById('na-pass').value='';
+}
+function deleteAccount(id){
+  if(currentUser&&currentUser.id===id){showAlert('Cannot delete your own account.','error');return;}
+  if(!confirm('Delete this account?'))return;
+  accounts=accounts.filter(a=>a.id!==id);
+  scheduleSync();renderAccounts();showAlert('Account deleted.','info');
+}
+function renderAccounts(){
+  const el=document.getElementById('accounts-list');
+  const colors={admin:'#CC0000',medtech:'#1B2A6B',volunteer:'#166534'};
+  const labels={admin:'Admin',medtech:'MedTech',volunteer:'Volunteer'};
+  el.innerHTML=accounts.map(a=>`
+    <div class="acct-item">
+      <div class="acct-avatar" style="background:${colors[a.role]||'#475569'}">${a.name.charAt(0).toUpperCase()}</div>
+      <div class="acct-info">
+        <div class="acct-name">${a.name}</div>
+        <div class="acct-role">@${a.username} · <span class="badge" style="font-size:9px;background:${colors[a.role]||'#f1f5f9'};color:#fff;padding:1px 6px">${labels[a.role]||a.role}</span></div>
+      </div>
+      <div class="acct-actions">
+        ${a.id!=='admin'?`<button class="btn btn-danger btn-sm" onclick="deleteAccount('${a.id}')"><i class="ti ti-trash"></i>Delete</button>`:'<span class="badge bg-gray">Protected</span>'}
+      </div>
+    </div>`).join('');
+}
+
+// ── MODAL ─────────────────────────────────────────────────
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ── NAV ──────────────────────────────────────────────────
+function showSection(id,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(el)el.classList.add('active');
+  if(id==='records')renderRecords();
+  if(id==='addons-mgmt')renderAddonsMgmt();
+  if(id==='accounts')renderAccounts();
+  if(id==='monthly-report'){
+    const m=document.getElementById('report-month');
+    if(!m.value){const n=new Date();m.value=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');}
+    renderMonthlyReport();
+  }
+}
+function switchTab(tabId,el){
+  document.querySelectorAll('.stab').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  ['tab-released','tab-reservations'].forEach(t=>document.getElementById(t).style.display=t===tabId?'block':'none');
+}
+function showAlert(msg,type='success'){
+  const box=document.getElementById('alert-box');
+  const icons={success:'ti-circle-check',error:'ti-alert-circle',info:'ti-info-circle'};
+  const el=document.createElement('div');
+  el.className=`alert alert-${type}`;
+  el.innerHTML=`<i class="ti ${icons[type]||icons.info}"></i>${msg}`;
+  box.appendChild(el);setTimeout(()=>el.remove(),3500);
+}
+
+// ── INVENTORY ─────────────────────────────────────────────
+function mk(c,bt){return c+'|'+bt;}
+function buildMatrix(editable,data,hdrBg){
+  let h=`<thead><tr><th style="background:${hdrBg||'#f8fafc'};min-width:90px">Component</th>`;
+  BTYPES.forEach(bt=>h+=`<th style="background:${hdrBg||'#f8fafc'}">${bt}</th>`);
+  h+=`<th style="background:${hdrBg||'#f8fafc'}">Total</th></tr></thead><tbody>`;
+  COMPS.forEach(c=>{
+    h+=`<tr><td>${CS[c]}<br><span style="font-size:9px;color:#94a3b8;font-weight:400">${c}</span></td>`;
+    let tot=0;
+    BTYPES.forEach(bt=>{
+      const k=mk(c,bt),v=data[k]||0;tot+=v;
+      if(editable)h+=`<td><input class="inv-input" type="number" min="0" value="${v}" data-key="${k}"></td>`;
+      else{const cl=v===0?'inv-zero':v<=2?'inv-low':'inv-ok';h+=`<td><span class="inv-pill ${cl}">${v}</span></td>`;}
+    });
+    h+=`<td><strong>${tot}</strong></td></tr>`;
+  });
+  return h+'</tbody>';
+}
+function getInvValues(){
+  const v={};document.querySelectorAll('#inv-table .inv-input').forEach(i=>v[i.dataset.key]=parseInt(i.value)||0);return v;
+}
+function computeReserved(){
+  const m={};COMPS.forEach(c=>BTYPES.forEach(bt=>m[mk(c,bt)]=0));
+  state.reservations.filter(r=>r.status==='active').forEach(r=>{const k=mk(r.component,r.bloodType);if(m[k]!==undefined)m[k]+=parseInt(r.quantity)||0;});
+  return m;
+}
+function computeAvailable(){
+  const res=computeReserved(),av={};
+  COMPS.forEach(c=>BTYPES.forEach(bt=>{const k=mk(c,bt);av[k]=Math.max(0,(state.inventory[k]||0)-(res[k]||0)+(state.addons[k]||0));}));
+  return av;
+}
+function updateStats(){
+  let tot=0,av=0,res=0,ao=0;
+  const avM=computeAvailable(),resM=computeReserved();
+  const todayStr=today();
+  const todayReleased=state.releasedRecords.filter(r=>r.date===todayStr).reduce((s,r)=>s+(r.quantity||1),0);
+  COMPS.forEach(c=>BTYPES.forEach(bt=>{const k=mk(c,bt);tot+=state.inventory[k]||0;av+=avM[k]||0;res+=resM[k]||0;ao+=state.addons[k]||0;}));
+  document.getElementById('stat-total').textContent=tot;
+  document.getElementById('stat-avail').textContent=av;
+  document.getElementById('stat-reserved').textContent=res;
+  document.getElementById('stat-addons').textContent=ao;
+  document.getElementById('stat-today-released').textContent=todayReleased;
+}
+function renderDashboard(){
+  document.getElementById('inv-table').innerHTML=buildMatrix(true,state.inventory);
+  document.getElementById('avail-table').innerHTML=buildMatrix(false,computeAvailable(),'#f0fdf4');
+  document.getElementById('reserved-table').innerHTML=buildMatrix(false,computeReserved(),'#fffbeb');
+  document.getElementById('addons-table').innerHTML=buildMatrix(false,state.addons,'#eff6ff');
+  document.getElementById('inv-last-update').textContent=state.invLastUpdate||'—';
+  updateStats();
+  renderDailySummary();
+}
+function saveInventory(){
+  state.inventory=getInvValues();
+  state.invLastUpdate=new Date().toLocaleString('en-PH',{timeZone:'Asia/Manila',hour:'2-digit',minute:'2-digit',hour12:true,year:'numeric',month:'short',day:'2-digit'});
+  saveState();renderDashboard();showAlert('Inventory updated and saved.');
+}
+function populateHospitals(){
+  const opts=HOSPITALS.map(h=>`<option value="${h}">`).join('');
+  ['hospital-list','hospital-list2'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+}
+
+// ── DAILY SUMMARY TABLE ───────────────────────────────────
+function renderDailySummary(){
+  const now=new Date();
+  const ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const mo=now.toLocaleDateString('en-PH',{month:'long',year:'numeric',timeZone:'Asia/Manila'});
+  document.getElementById('daily-month-label').textContent=mo;
+  const daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  // Build day→records map
+  const byDay={};
+  for(let d=1;d<=daysInMonth;d++){
+    const dk=ym+'-'+String(d).padStart(2,'0');
+    byDay[dk]=state.releasedRecords.filter(r=>r.date===dk);
+  }
+  let html=`<thead><tr>
+    <th style="background:var(--navy);color:#fff;text-align:left">Date</th>
+    <th style="background:var(--navy);color:#fff">WB</th>
+    <th style="background:var(--navy);color:#fff">PRBC</th>
+    <th style="background:var(--navy);color:#fff">PC</th>
+    <th style="background:var(--navy);color:#fff">FFP</th>
+    <th style="background:var(--navy);color:#fff">Total Units</th>
+    <th style="background:var(--navy);color:#fff">Patients</th>
+    <th style="background:var(--navy);color:#fff">Amount (₱)</th>
+  </tr></thead><tbody>`;
+  let grandUnits=0,grandPts=0,grandAmt=0;
+  for(let d=1;d<=daysInMonth;d++){
+    const dk=ym+'-'+String(d).padStart(2,'0');
+    const recs=byDay[dk];
+    const dayLabel=new Date(now.getFullYear(),now.getMonth(),d).toLocaleDateString('en-PH',{weekday:'short',day:'numeric'});
+    const wbU=recs.filter(r=>r.component==='Whole Blood').reduce((s,r)=>s+(r.quantity||1),0);
+    const prbcU=recs.filter(r=>r.component==='Packed RBC').reduce((s,r)=>s+(r.quantity||1),0);
+    const pcU=recs.filter(r=>r.component==='Platelet Concentrate').reduce((s,r)=>s+(r.quantity||1),0);
+    const ffpU=recs.filter(r=>r.component==='Fresh Frozen Plasma').reduce((s,r)=>s+(r.quantity||1),0);
+    const totU=wbU+prbcU+pcU+ffpU;
+    const amt=recs.reduce((s,r)=>s+(r.amount||0),0);
+    grandUnits+=totU;grandPts+=recs.length;grandAmt+=amt;
+    const isToday=dk===today();
+    const rowStyle=isToday?'background:#eff3ff;font-weight:700':'';
+    html+=`<tr style="${rowStyle}">
+      <td style="text-align:left;${isToday?'color:var(--navy);':'color:var(--text)'}">${dayLabel}${isToday?' ← Today':''}</td>
+      <td>${wbU||''}</td><td>${prbcU||''}</td><td>${pcU||''}</td><td>${ffpU||''}</td>
+      <td><strong>${totU||''}</strong></td>
+      <td>${recs.length||''}</td>
+      <td>${amt?'₱'+amt.toLocaleString('en-PH',{minimumFractionDigits:2}):''}</td>
+    </tr>`;
+  }
+  html+=`</tbody><tfoot><tr style="background:var(--navy);color:#fff">
+    <td style="color:#fff;font-weight:700;text-align:left">MONTH TOTAL</td>
+    <td colspan="4"></td>
+    <td style="color:#fff;font-weight:700">${grandUnits}</td>
+    <td style="color:#fff;font-weight:700">${grandPts}</td>
+    <td style="color:#fff;font-weight:700">₱${grandAmt.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+  </tr></tfoot>`;
+  document.getElementById('daily-summary-table').innerHTML=html;
+}
+
+// ── RESERVATION ──────────────────────────────────────────
+function saveReservation(){
+  const d=id=>document.getElementById(id)?.value||'';
+  const patient=d('res-patient').trim(),date=d('res-date'),time=d('res-time'),
+    hospital=d('res-hospital').trim(),btype=d('res-btype'),comp=d('res-comp'),
+    qty=parseInt(d('res-qty'))||0,remarks=d('res-remarks').trim();
+  if(!patient||!date||!hospital||!btype||!comp||!qty){showAlert('Please fill all required fields.','error');return;}
+  const av=computeAvailable();
+  if((av[mk(comp,btype)]||0)<qty){showAlert(`Insufficient units. Available: ${av[mk(comp,btype)]||0}`,'error');return;}
+  const performedBy=currentUser?currentUser.username:'unknown';
+  state.reservations.push({id:'R'+Date.now(),date,patient,time,hospital,bloodType:btype,component:comp,quantity:qty,remarks,status:'active',performedBy,createdAt:new Date().toISOString()});
+  saveState();renderDashboard();renderReservationList();
+  showAlert(`Reservation saved for ${patient}.`);clearResForm();
+}
+function cancelReservation(id){
+  const r=state.reservations.find(x=>x.id===id);if(!r)return;
+  r.status='cancelled';r.cancelledAt=new Date().toISOString();
+  saveState();renderDashboard();renderReservationList();
+  showAlert(`Reservation for ${r.patient} cancelled.`,'info');
+}
+function releaseReservation(id){
+  const r=state.reservations.find(x=>x.id===id);if(!r)return;
+  if(!confirm(`Mark reservation for ${r.patient} as Released? This will remove them from the active list.`))return;
+  r.status='released';r.releasedAt=new Date().toISOString();
+  r.releasedBy=currentUser?currentUser.username:'unknown';
+  saveState();renderDashboard();renderReservationList();
+  showAlert(`${r.patient} marked as released.`);
+}
+function renderReservationList(){
+  const active=state.reservations.filter(r=>r.status==='active');
+  document.getElementById('active-count').textContent=active.length;
+  const c=document.getElementById('res-list');
+  if(!active.length){c.innerHTML=`<div class="empty-state"><i class="ti ti-clipboard-x"></i><p>No active reservations.</p></div>`;return;}
+  c.innerHTML=active.map(r=>`
+    <div class="res-item">
+      <div class="res-item-icon"><i class="ti ti-user"></i></div>
+      <div class="res-body">
+        <div class="res-name">${r.patient}</div>
+        <div class="res-meta">
+          <span><i class="ti ti-calendar" style="font-size:11px"></i>${r.date}</span>
+          <span><i class="ti ti-clock" style="font-size:11px"></i>${r.time||'—'}</span>
+          <span><i class="ti ti-building-hospital" style="font-size:11px"></i>${r.hospital}</span>
+          <span><i class="ti ti-user-circle" style="font-size:11px"></i>${r.performedBy||'—'}</span>
+        </div>
+        <div style="margin-top:4px;display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+          <span class="badge bg-red">${r.bloodType}</span>
+          <span class="badge bg-gray">${CS[r.component]||r.component}</span>
+          <span class="badge bg-purple">×${r.quantity} units</span>
+          ${r.remarks?`<span style="font-size:10px;color:#94a3b8;font-style:italic">${r.remarks}</span>`:''}
+        </div>
+      </div>
+      <div class="res-actions">
+        <span class="badge bg-amber">Active</span>
+        <button class="btn btn-success btn-sm" onclick="releaseReservation('${r.id}')"><i class="ti ti-check"></i>Released</button>
+        <button class="btn btn-danger btn-sm" onclick="cancelReservation('${r.id}')"><i class="ti ti-x"></i>Cancel</button>
+      </div>
+    </div>`).join('');
+}
+
+// ── BLOOD RELEASED ───────────────────────────────────────
+function saveReleased(){
+  const g=id=>document.getElementById(id)?.value||'';
+  const patient=g('rel-patient').trim(),date=g('rel-date');
+  if(!patient||!date){showAlert('Date and Patient Name are required.','error');return;}
+  const sns=[];for(let i=1;i<=10;i++){const v=g('sn'+i).trim();if(v)sns.push(v);}
+  const performedBy=currentUser?currentUser.username:'unknown';
+  state.releasedRecords.push({id:'BL'+Date.now(),date,patient,brf:g('rel-brf'),timePrepared:g('rel-time-prepared'),timeReleased:g('rel-time-released'),sex:g('rel-sex'),age:g('rel-age')?parseInt(g('rel-age')):null,diagnosis:g('rel-diagnosis'),hospital:g('rel-hospital'),source:g('rel-source'),address:g('rel-address'),bloodType:g('rel-btype'),component:g('rel-comp'),quantity:parseInt(g('rel-qty'))||1,category:g('rel-cat'),charity:g('rel-charity'),amount:parseFloat(g('rel-amount'))||0,invoice:g('rel-inv'),receipt:g('rel-or'),serialNumbers:sns,performedBy,createdAt:new Date().toISOString()});
+  saveState();renderDashboard();showAlert(`Blood release record saved for ${patient}.`);clearRelForm();
+}
+
+// ── ADD-ONS ──────────────────────────────────────────────
+function saveAddon(){
+  const btype=document.getElementById('ao-btype').value,comp=document.getElementById('ao-comp').value,qty=parseInt(document.getElementById('ao-qty').value)||0;
+  if(!btype||!comp||!qty){showAlert('Please select blood type, component, and quantity.','error');return;}
+  const k=mk(comp,btype);state.addons[k]=(state.addons[k]||0)+qty;
+  saveState();renderDashboard();renderAddonsMgmt();
+  showAlert(`Added ${qty} unit(s) of ${btype} ${CS[comp]||comp}.`);
+  document.getElementById('ao-qty').value=1;
+}
+function resetAddons(){
+  if(!confirm('Reset all today\'s add-ons to zero?'))return;
+  state.addons={};saveState();renderDashboard();renderAddonsMgmt();showAlert('Add-ons reset.','info');
+}
+function renderAddonsMgmt(){document.getElementById('addons-mgmt-table').innerHTML=buildMatrix(false,state.addons,'#eff6ff');}
+
+// ── RECORDS ──────────────────────────────────────────────
+function renderRecords(){
+  const tb=document.getElementById('records-tbody');
+  const catColors={Pay:'bg-green',Charity:'bg-blue',Indigent:'bg-purple','C/O AICS':'bg-amber','HD Paid':'bg-green','HD Unpaid':'bg-red',Augmented:'bg-gray'};
+  if(!state.releasedRecords.length){tb.innerHTML=`<tr><td colspan="10"><div class="empty-state"><i class="ti ti-database-off"></i><p>No released blood records yet.</p></div></td></tr>`;}
+  else{
+    tb.innerHTML=state.releasedRecords.slice().reverse().map(r=>`<tr>
+      <td>${r.date}</td><td style="text-align:left">${r.patient}</td><td>${r.brf||'—'}</td>
+      <td style="text-align:left;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.hospital}</td>
+      <td><span class="badge bg-red">${r.bloodType}</span></td>
+      <td><span class="badge bg-gray">${CS[r.component]||r.component}</span></td>
+      <td>${r.quantity}</td>
+      <td><span class="badge ${catColors[r.category]||'bg-gray'}">${r.category||'—'}</span></td>
+      <td>₱${(r.amount||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+      <td><span class="badge bg-navy">${r.performedBy||'—'}</span></td>
+    </tr>`).join('');
+  }
+  const rh=document.getElementById('res-hist-tbody');
+  if(!state.reservations.length){rh.innerHTML=`<tr><td colspan="9"><div class="empty-state"><i class="ti ti-database-off"></i><p>No reservation history yet.</p></div></td></tr>`;}
+  else{rh.innerHTML=state.reservations.slice().reverse().map(r=>`<tr>
+    <td>${r.date}</td><td style="text-align:left">${r.patient}</td><td style="text-align:left">${r.hospital}</td>
+    <td><span class="badge bg-red">${r.bloodType}</span></td><td><span class="badge bg-gray">${CS[r.component]||r.component}</span></td>
+    <td>${r.quantity}</td><td style="text-align:left">${r.remarks||'—'}</td>
+    <td><span class="badge ${r.status==='active'?'bg-amber':r.status==='released'?'bg-green':'bg-red'}">${r.status}</span></td>
+    <td><span class="badge bg-navy">${r.performedBy||'—'}</span></td>
+  </tr>`).join('');}
+}
+
+// ── DATA MANAGEMENT ───────────────────────────────────────
+function exportJSON(){
+  const data={state,exportedAt:new Date().toISOString(),exportedBy:currentUser?.username||'unknown'};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`PRC_Nasugbu_Backup_${today()}.json`;
+  a.click();URL.revokeObjectURL(url);
+  showAlert('JSON backup exported successfully.');
+}
+function importJSON(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.state){showAlert('Invalid backup file format.','error');return;}
+      if(!confirm(`Import backup from ${data.exportedAt||'unknown date'}? This will REPLACE all current data.`)){return;}
+      state=data.state;
+      saveState();renderDashboard();renderReservationList();
+      showAlert('Data imported successfully from backup.');
+    }catch(err){showAlert('Failed to parse backup file.','error');}
+    input.value='';
+  };
+  reader.readAsText(file);
+}
+
+// ── MONTHLY REPORT ENGINE ─────────────────────────────────
+function ageBracket(age){
+  if(age===null||age===undefined||age==='')return'Unknown';
+  const a=parseInt(age);if(isNaN(a))return'Unknown';
+  if(a<5)return'<5 yrs';if(a<=14)return'5–14 yrs';if(a<=44)return'15–44 yrs';if(a<=59)return'45–59 yrs';return'60+ yrs';
+}
+function getMonthRecs(ym){return state.releasedRecords.filter(r=>r.date&&r.date.startsWith(ym));}
+function pct(n,total){return total?Math.round(n/total*100)+'%':'0%';}
+
+function renderMonthlyReport(){
+  const ym=document.getElementById('report-month').value;
+  if(!ym){showAlert('Please select a month.','error');return;}
+  const recs=getMonthRecs(ym);
+  const [yr,mo]=ym.split('-');
+  const moLabel=new Date(yr,mo-1,1).toLocaleDateString('en-PH',{month:'long',year:'numeric'});
+  const div=document.getElementById('monthly-report-content');
+  if(!recs.length){div.innerHTML=`<div class="empty-state"><i class="ti ti-database-off"></i><p>No records found for ${moLabel}.</p></div>`;return;}
+  const mCount=recs.filter(r=>r.sex==='Male').length,fCount=recs.filter(r=>r.sex==='Female').length,uCount=recs.length-mCount-fCount;
+  const genderCat={};CAT_MAIN.forEach(c=>{genderCat[c]={Male:0,Female:0,Unknown:0,total:0};});
+  recs.forEach(r=>{const cat=CAT_MAIN.includes(r.category)?r.category:null;if(!cat)return;const sex=r.sex==='Male'?'Male':r.sex==='Female'?'Female':'Unknown';genderCat[cat][sex]++;genderCat[cat].total++;});
+  const unitsCat={};recs.forEach(r=>{const c=r.category||'Unknown';unitsCat[c]=(unitsCat[c]||0)+(r.quantity||1);});
+  const hospMap={};recs.forEach(r=>{const h=r.hospital||'Unknown',sex=r.sex==='Male'?'Male':r.sex==='Female'?'Female':'Unknown',q=r.quantity||1;if(!hospMap[h])hospMap[h]={Male:0,Female:0,Unknown:0,total:0};hospMap[h][sex]+=q;hospMap[h].total+=q;});
+  const btComp={};COMPS.forEach(c=>{btComp[c]={};BTYPES.forEach(bt=>btComp[c][bt]=0);btComp[c].total=0;});
+  const btTotals={};BTYPES.forEach(bt=>btTotals[bt]=0);
+  recs.forEach(r=>{if(btComp[r.component]&&r.bloodType){btComp[r.component][r.bloodType]=(btComp[r.component][r.bloodType]||0)+(r.quantity||1);btComp[r.component].total+=(r.quantity||1);btTotals[r.bloodType]=(btTotals[r.bloodType]||0)+(r.quantity||1);}});
+  const ageBkt={};AGE_BRACKETS.forEach(ab=>{ageBkt[ab]={Male:0,Female:0,Unknown:0,total:0};});
+  if(!ageBkt['Unknown'])ageBkt['Unknown']={Male:0,Female:0,Unknown:0,total:0};
+  recs.forEach(r=>{const ab=ageBracket(r.age),sex=r.sex==='Male'?'Male':r.sex==='Female'?'Female':'Unknown';if(!ageBkt[ab])ageBkt[ab]={Male:0,Female:0,Unknown:0,total:0};ageBkt[ab][sex]++;ageBkt[ab].total++;});
+  
+  function rtable(title,thead,tbody,tfoot=''){
+    return`<div class="report-section"><div class="report-title">${title}</div><div style="overflow-x:auto"><table class="report-table"><thead>${thead}</thead><tbody>${tbody}</tbody>${tfoot?`<tfoot>${tfoot}</tfoot>`:''}</table></div></div>`;
+  }
+  let html=`<div style="font-size:14px;font-weight:700;color:var(--navy-dark);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--navy-mid)">
+    📋 Monthly Report — ${moLabel} &nbsp;<span style="font-size:11px;font-weight:400;color:var(--muted)">(${recs.length} total records)</span></div>`;
+  html+=rtable('1. Patient Count by Sex',`<tr><th>Sex</th><th>Count</th><th>%</th></tr>`,
+    `<tr><td>Male</td><td>${mCount}</td><td>${pct(mCount,recs.length)}</td></tr><tr><td>Female</td><td>${fCount}</td><td>${pct(fCount,recs.length)}</td></tr>${uCount?`<tr><td>Unknown/Not stated</td><td>${uCount}</td><td>${pct(uCount,recs.length)}</td></tr>`:''}`,
+    `<tr><td><strong>Total</strong></td><td><strong>${recs.length}</strong></td><td><strong>100%</strong></td></tr>`);
+  let gc_rows=CAT_MAIN.map(c=>`<tr><td>${c}</td><td>${genderCat[c].Male}</td><td>${genderCat[c].Female}</td><td>${genderCat[c].Unknown||''}</td><td><strong>${genderCat[c].total}</strong></td></tr>`).join('');
+  const gcTotM=CAT_MAIN.reduce((s,c)=>s+genderCat[c].Male,0),gcTotF=CAT_MAIN.reduce((s,c)=>s+genderCat[c].Female,0),gcTotU=CAT_MAIN.reduce((s,c)=>s+genderCat[c].Unknown,0),gcTot=CAT_MAIN.reduce((s,c)=>s+genderCat[c].total,0);
+  html+=rtable('2. Patient Count by Sex and Category',`<tr><th>Category</th><th>Male</th><th>Female</th><th>Unknown</th><th>Total</th></tr>`,gc_rows,`<tr><td><strong>Total</strong></td><td><strong>${gcTotM}</strong></td><td><strong>${gcTotF}</strong></td><td><strong>${gcTotU}</strong></td><td><strong>${gcTot}</strong></td></tr>`);
+  const allCats=[...new Set(recs.map(r=>r.category||'Unknown'))].sort();
+  const ucTot=allCats.reduce((s,c)=>s+(unitsCat[c]||0),0);
+  html+=rtable('3. Units Released by Category',`<tr><th>Category</th><th>Units</th><th>%</th></tr>`,allCats.map(c=>`<tr><td>${c}</td><td>${unitsCat[c]||0}</td><td>${pct(unitsCat[c]||0,ucTot)}</td></tr>`).join(''),`<tr><td><strong>Total</strong></td><td><strong>${ucTot}</strong></td><td><strong>100%</strong></td></tr>`);
+  const hospList=Object.entries(hospMap).sort((a,b)=>b[1].total-a[1].total);
+  const hTotM=hospList.reduce((s,[,v])=>s+v.Male,0),hTotF=hospList.reduce((s,[,v])=>s+v.Female,0),hTot=hospList.reduce((s,[,v])=>s+v.total,0);
+  html+=rtable('4. Units Released per Hospital by Sex',`<tr><th>Hospital</th><th>Male</th><th>Female</th><th>Unknown</th><th>Total Units</th></tr>`,hospList.map(([h,v])=>`<tr><td>${h}</td><td>${v.Male}</td><td>${v.Female}</td><td>${v.Unknown||''}</td><td><strong>${v.total}</strong></td></tr>`).join(''),`<tr><td><strong>Total</strong></td><td><strong>${hTotM}</strong></td><td><strong>${hTotF}</strong></td><td></td><td><strong>${hTot}</strong></td></tr>`);
+  const grandTot=Object.values(btTotals).reduce((s,v)=>s+v,0);
+  let bt_head=`<tr><th>Component</th>${BTYPES.map(bt=>`<th>${bt}</th>`).join('')}<th>Total</th></tr>`;
+  let bt_rows=COMPS.map(c=>`<tr><td>${CS[c]} <span style="font-size:9px;color:#999">${c}</span></td>${BTYPES.map(bt=>`<td>${btComp[c][bt]||0}</td>`).join('')}<td><strong>${btComp[c].total}</strong></td></tr>`).join('');
+  let bt_foot=`<tr><td><strong>Total</strong></td>${BTYPES.map(bt=>`<td><strong>${btTotals[bt]||0}</strong></td>`).join('')}<td><strong>${grandTot}</strong></td></tr>`;
+  html+=rtable('5. Units Released by Blood Type and Component',bt_head,bt_rows,bt_foot);
+  const allBrackets=[...AGE_BRACKETS,'Unknown'].filter(ab=>ageBkt[ab]&&ageBkt[ab].total>0);
+  const abTotM=allBrackets.reduce((s,ab)=>s+(ageBkt[ab]?.Male||0),0),abTotF=allBrackets.reduce((s,ab)=>s+(ageBkt[ab]?.Female||0),0),abTotU=allBrackets.reduce((s,ab)=>s+(ageBkt[ab]?.Unknown||0),0),abTot=allBrackets.reduce((s,ab)=>s+(ageBkt[ab]?.total||0),0);
+  html+=rtable('6. Patients by Age Bracket and Sex',`<tr><th>Age Bracket</th><th>Male</th><th>Female</th><th>Unknown</th><th>Total</th><th>%</th></tr>`,allBrackets.map(ab=>`<tr><td>${ab}</td><td>${ageBkt[ab]?.Male||0}</td><td>${ageBkt[ab]?.Female||0}</td><td>${ageBkt[ab]?.Unknown||0}</td><td><strong>${ageBkt[ab]?.total||0}</strong></td><td>${pct(ageBkt[ab]?.total||0,recs.length)}</td></tr>`).join(''),`<tr><td><strong>Total</strong></td><td><strong>${abTotM}</strong></td><td><strong>${abTotF}</strong></td><td><strong>${abTotU}</strong></td><td><strong>${abTot}</strong></td><td><strong>100%</strong></td></tr>`);
+  div.innerHTML=html;
+}
+
+// ── EXCEL EXPORTS ─────────────────────────────────────────
+function exportDaily(){
+  if(!window.XLSX){showAlert('Excel library loading, please try again.','error');return;}
+  const WB=XLSX.utils.book_new();
+  const todayStr=today();
+  const recs=state.releasedRecords.filter(r=>r.date===todayStr);
+  const hdr=['Date','Patient Name','BRF #','Time Prepared','Time Released','Sex','Age','Diagnosis','Hospital','Blood Source','Address','Blood Type','Component','Quantity','Category','Charity/Indigent Care of','Amount Paid','Sales Invoice #','OR #','Serial Numbers','Performed By'];
+  const rows=recs.map(r=>[r.date,r.patient,r.brf,r.timePrepared,r.timeReleased,r.sex,r.age,r.diagnosis,r.hospital,r.source,r.address,r.bloodType,r.component,r.quantity,r.category,r.charity,r.amount,r.invoice,r.receipt,(r.serialNumbers||[]).join(', '),r.performedBy||'']);
+  XLSX.utils.book_append_sheet(WB,XLSX.utils.aoa_to_sheet([hdr,...rows]),'Daily Transactions');
+  XLSX.writeFile(WB,`PRC_Nasugbu_Daily_${todayStr}.xlsx`);
+  showAlert(`Daily report exported (${recs.length} records).`);
+}
+function exportMonthlyExcel(){
+  if(!window.XLSX){showAlert('Excel library loading, please try again.','error');return;}
+  const WB=XLSX.utils.book_new();
+  const now=new Date(),ym=now.getFullYear()+'-'+(String(now.getMonth()+1).padStart(2,'0'));
+  const recs=state.releasedRecords.filter(r=>r.date&&r.date.startsWith(ym));
+  const byDate={};recs.forEach(r=>{if(!byDate[r.date])byDate[r.date]=[];byDate[r.date].push(r);});
+  const hdr=['Date','Patient Name','BRF #','Blood Type','Component','Qty','Category','Amount','Hospital','Diagnosis','Performed By'];
+  const rows=[];
+  Object.keys(byDate).sort().forEach(d=>{
+    byDate[d].forEach(r=>rows.push([r.date,r.patient,r.brf,r.bloodType,r.component,r.quantity,r.category,r.amount,r.hospital,r.diagnosis,r.performedBy||'']));
+    rows.push(['','','','','','Day Total','',byDate[d].reduce((s,r)=>s+(r.amount||0),0),'','','']);
+    rows.push([]);
+  });
+  rows.push(['','','','','','GRAND TOTAL','',recs.reduce((s,r)=>s+(r.amount||0),0),'','','']);
+  XLSX.utils.book_append_sheet(WB,XLSX.utils.aoa_to_sheet([hdr,...rows]),'Monthly Consolidated');
+  XLSX.writeFile(WB,`PRC_Nasugbu_Monthly_${ym}.xlsx`);
+  showAlert(`Monthly report exported (${recs.length} records).`);
+}
+function exportMonthlyReport(){
+  if(!window.XLSX){showAlert('Excel library loading, please try again.','error');return;}
+  const ym=document.getElementById('report-month').value;
+  if(!ym){showAlert('Please select a month first.','error');return;}
+  const recs=getMonthRecs(ym);
+  if(!recs.length){showAlert('No records for selected month.','error');return;}
+  const WB=XLSX.utils.book_new();
+  const [yr,mo]=ym.split('-');
+  const moLabel=new Date(yr,mo-1,1).toLocaleDateString('en-PH',{month:'long',year:'numeric'});
+  const mC=recs.filter(r=>r.sex==='Male').length,fC=recs.filter(r=>r.sex==='Female').length,uC=recs.length-mC-fC;
+  const sh1=[['Monthly Statistical Report — '+moLabel],[''],['1. Patient Count by Sex'],['Sex','Count','%'],[`Male`,mC,pct(mC,recs.length)],[`Female`,fC,pct(fC,recs.length)],[`Unknown`,uC,pct(uC,recs.length)],[`Total`,recs.length,'100%']];
+  XLSX.utils.book_append_sheet(WB,XLSX.utils.aoa_to_sheet(sh1),'1.Sex Summary');
+  const gCat={};CAT_MAIN.forEach(c=>{gCat[c]={Male:0,Female:0,Unknown:0,total:0};});
+  recs.forEach(r=>{const cat=CAT_MAIN.includes(r.category)?r.category:null;if(!cat)return;const s=r.sex==='Male'?'Male':r.sex==='Female'?'Female':'Unknown';gCat[cat][s]++;gCat[cat].total++;});
+  const sh2=[['2. Patients by Sex and Category'],['Category','Male','Female','Unknown','Total'],...CAT_MAIN.map(c=>[c,gCat[c].Male,gCat[c].Female,gCat[c].Unknown,gCat[c].total]),['Total',CAT_MAIN.reduce((s,c)=>s+gCat[c].Male,0),CAT_MAIN.reduce((s,c)=>s+gCat[c].Female,0),CAT_MAIN.reduce((s,c)=>s+gCat[c].Unknown,0),CAT_MAIN.reduce((s,c)=>s+gCat[c].total,0)]];
+  XLSX.utils.book_append_sheet(WB,XLSX.utils.aoa_to_sheet(sh2),'2.Gender by Category');
+  const uCat={};recs.forEach(r=>{const c=r.category||'Unknown';uCat[c]=(uCat[c]||0)+(r.quantity||1);});
+  const sh3=[['3. Units Released by Category'],['Category','Units','%'],...Object.entries(uCat).sort().map(([c,v])=>[c,v,pct(v,recs.length)]),['Total',recs.reduce((s,r)=>s+(r.quantity||1),0),'100%']];
+  XLSX.utils.book_append_sheet(WB,XLSX.utils.aoa_to_sheet(sh3),'3.Units by Category');
+  const hMap={};recs.forEach(r=>{const h=r.hospital||'Unknown',s=r.sex==='Male'?'Male':r.sex==='Female'?'Female':'Unknown',q=r.quantity||1;if(!hMap[h])hMap[h]={Male:0,Female:0,Unknown:0,total:0};hMap[h][s]+=q;hMap[h].total+=q;});
+  const sh4=[['4. Units per Hospital by Sex'],['Hospital','Male','Female','Unknown','Total'],...Object.entries(hMap).sort((a,b)=>b[1].total-a[1].total).map(([h,v])=>[h,v.Male,v.Female,v.Unknown,v.total])];
+  XLSX.utils.book_append_sheet(WB,XLSX.utils.aoa_to_sheet(sh4),'4.Hospital by Sex');
+  const bComp={};COMPS.forEach(c=>{bComp[c]={};BTYPES.forEach(bt=>bComp[c][bt]=0);bComp[c].total=0;});
+  const btT={};BTYPES.forEach(bt=>btT[bt]=0);
+  recs.forEach(r=>{if(bComp[r.component]&&r.bloodType){bComp[r.component][r.bloodType]+=(r.quantity||1);bComp[r.component].total+=(r.quantity||1);btT[r.bloodType]+=(r.quantity||1);}});
+  const sh5=[['5. Units by Blood Type and Component'],['Component',...BTYPES,'Total'],...COMPS.map(c=>[c,...BTYPES.map(bt=>bComp[c][bt]||0),bComp[c].total]),['Total',...BTYPES.map(bt=>btT[bt]||0),BTYPES.reduce((s,bt)=>s+(btT[bt]||0),0)]];
+  XLSX.utils.book_append_sheet(WB,XLSX.utils.aoa_to_sheet(sh5),'5.Blood Type x Component');
+  const aBkt={};const allAB=[...AGE_BRACKETS,'Unknown'];allAB.forEach(ab=>aBkt[ab]={Male:0,Female:0,Unknown:0,total:0});
+  recs.forEach(r=>{const ab=ageBracket(r.age),s=r.sex==='Male'?'Male':r.sex==='Female'?'Female':'Unknown';if(!aBkt[ab])aBkt[ab]={Male:0,Female:0,Unknown:0,total:0};aBkt[ab][s]++;aBkt[ab].total++;});
+  const sh6=[['6. Patients by Age Bracket and Sex'],['Age Bracket','Male','Female','Unknown','Total','%'],...allAB.filter(ab=>aBkt[ab].total>0).map(ab=>[ab,aBkt[ab].Male,aBkt[ab].Female,aBkt[ab].Unknown,aBkt[ab].total,pct(aBkt[ab].total,recs.length)])];
+  XLSX.utils.book_append_sheet(WB,XLSX.utils.aoa_to_sheet(sh6),'6.Age Brackets');
+  XLSX.writeFile(WB,`PRC_Nasugbu_MonthlyReport_${ym}.xlsx`);
+  showAlert(`Monthly statistical report exported for ${moLabel}.`);
+}
+
+// ── FORM HELPERS ─────────────────────────────────────────
+function clearResForm(){
+  ['res-date','res-patient','res-time','res-hospital','res-btype','res-comp','res-remarks'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('res-qty').value=1;
+  document.getElementById('res-date').value=today();
+}
+function clearRelForm(){
+  ['rel-date','rel-brf','rel-time-prepared','rel-time-released','rel-patient','rel-sex','rel-age','rel-diagnosis','rel-hospital','rel-source','rel-address','rel-btype','rel-comp','rel-cat','rel-charity','rel-amount','rel-inv','rel-or'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  for(let i=1;i<=10;i++){const el=document.getElementById('sn'+i);if(el)el.value='';}
+  document.getElementById('rel-qty').value=1;
+  document.getElementById('rel-date').value=today();
+}
+function clearAll(){state={inventory:{},reservations:[],releasedRecords:[],addons:{},invLastUpdate:null};saveState();renderDashboard();renderReservationList();showAlert('All data cleared.','info');}
+function today(){return new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Manila'});}
+
+// ── CLOCK ─────────────────────────────────────────────────
+function updateClock(){
+  const now=new Date();
+  document.getElementById('clock').textContent=now.toLocaleTimeString('en-PH',{timeZone:'Asia/Manila',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
+  document.getElementById('datestamp').textContent=now.toLocaleDateString('en-PH',{timeZone:'Asia/Manila',weekday:'short',year:'numeric',month:'short',day:'numeric'});
+}
+
+// ── INIT ──────────────────────────────────────────────────
+async function init(){
+  setSyncUI('syncing','Loading…');
+  await loadState();
+  setSyncUI('ok','Synced');
+  populateHospitals();
+  renderDashboard();
+  renderReservationList();
+  updateClock();setInterval(updateClock,1000);
+  document.getElementById('res-date').value=today();
+  document.getElementById('rel-date').value=today();
+  const now=new Date();
+  document.getElementById('report-month').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+}
+init();
+</script>
+</body>
+</html>
